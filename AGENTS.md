@@ -14,8 +14,10 @@ This project uses a branch-based task tracking system where `todo.md` maintains 
 
 ### Starting Work on an Item
 1. Create a branch named after the item: `git checkout -b item-name`
-2. Move to that branch to work on the item
-3. Commit and push changes to the feature branch
+2. Move any sub-items for that item from `[PENDING]` to above the `[PENDING]` delimiter in todo.md
+3. Delete the item from `[PENDING]` (the item is now inferred by the branch name)
+4. Commit and push todo.md changes to the feature branch
+5. Continue work on the feature branch, committing as needed
 
 ### Completing an Item
 1. Make final commit and push to the feature branch
