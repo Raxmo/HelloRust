@@ -10,6 +10,13 @@ This project uses a branch-based task tracking system where `todo.md` maintains 
 - Pending items listed below the delimiter
 - Completed items are **deleted** after each git push
 
+## Commits
+
+All git commits must use todo.md as the commit message:
+```bash
+git commit -F todo.md
+```
+
 ## Workflow
 
 ### Starting Work on an Item
