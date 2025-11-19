@@ -4,10 +4,11 @@
 This project uses a branch-based task tracking system where `todo.md` maintains a list of pending items only.
 
 ## todo.md Format
-- Timestamp at the top: `[Mon DD YYYY]`
-- Pending items listed below under implicit pending section
+- Timestamp at the top: `[YYYY.MM.DD-HH:MM]`
+- Sub-items for the current active item listed below
+- Delimiter: `[PENDING]`
+- Pending items listed below the delimiter
 - Completed items are **deleted** after each git push
-- Sub-items for the current active item can be tracked in a separate section at the bottom
 
 ## Workflow
 
