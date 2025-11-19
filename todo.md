@@ -3,4 +3,5 @@
 [PENDING]
 - ownership-and-borrowing
 - pattern-matching
+- match
 - traits
