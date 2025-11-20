@@ -4,7 +4,7 @@
 This project uses a branch-based task tracking system where `todo.md` maintains a list of pending items only.
 
 ## todo.md Format
-- Timestamp at the top: `[YYYY.MM.DD-HH:MM]`
+- Timestamp at the top: `[YYYY.MM.DD-HH:MM]` (auto-updated on each commit)
 - Sub-items for the current active item listed below
 - Delimiter: `[PENDING]`
 - Pending items listed below the delimiter
