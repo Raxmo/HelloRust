@@ -1,5 +1,5 @@
-[2025.11.21-11:02]
+[2025.11.22-11:15]
 
-Refined script language specification with property access syntax, examples, and formal execution model. Renamed TestSCRPT.md to technical.md.
+Restructured technical.md with designator/argument framework. Replaced lvalue/rvalue semantics with designator types (Value, Action, Transformative, Narrative, Structural). Clarified that bare designator names cannot be arguments, only complete designator tags can. Established core asymmetry rule: anything that can be an argument cannot be a designator.
 
 [PENDING]
