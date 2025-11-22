@@ -3,6 +3,34 @@
 ## Overview
 Tag-based script format for interactive text-based visual novel engine. All syntax uses recursive `[a: b]` bracket notation where both `a` and `b` can be tags or values. Instruction tags execute sequentially to form tag-lists.
 
+## Foundational Principles
+
+### Binary Structure
+All tags are strictly binary: `[designator: argument]`. No exceptions.
+
+### Designator as Control Plane
+The designator (left side of `:`) is the control plane of the tag. It dictates:
+1. **How** the argument is evaluated
+2. **What type** the complete tag resolves to
+3. **What happens** during resolution (execution, type checking, transformation, etc.)
+
+Examples:
+- `[value: 100]` — designator `value` says "treat argument as integer literal", tag resolves to integer
+- `[null: expression]` — designator `null` says "check if expression exists", tag resolves to flag
+- `[[set: prop]: value]` — designator `set` says "assign value to prop", argument is evaluated as assignment operand
+- `[character: alice]` — designator `character` says "create/reference container", tag resolves to character type
+
+### Recursive Nesting and Logic Mutation
+Because tags are binary and recursively nestable, the same nested structure can be interpreted completely differently depending on what designator wraps it. Logic and functionality are frequently mutated during resolution.
+
+Examples:
+- `[value: [[[character: alice]: [attribute: gold]]]]` — outer `value` designator treats inner resolution as type assertion (must be integer)
+- `[null: [[[character: alice]: [attribute: sword]]]]` — outer `null` designator wraps inner resolution in existence check (returns flag)
+- `[[if: condition]: [[set: prop]: value]]` — outer `if` designator branches execution based on condition; inner `set` becomes conditional
+- `[[set: [[[character: alice]: [attribute: mood]]: [label: happy]]]` — inner property access is transformed by outer `set` into an assignment target
+
+This recursive composition without fixed syntax makes the language highly expressive: the same nested tags behave differently depending on context.
+
 ## Tag Categories
 
 Tags are organized by their designator semantics. Each designator name defines what kind of operation or value is being created.

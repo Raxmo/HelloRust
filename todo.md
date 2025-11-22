@@ -1,5 +1,5 @@
-[2025.11.22-11:15]
+[2025.11.22-11:20]
 
-Restructured technical.md with designator/argument framework. Replaced lvalue/rvalue semantics with designator types (Value, Action, Transformative, Narrative, Structural). Clarified that bare designator names cannot be arguments, only complete designator tags can. Established core asymmetry rule: anything that can be an argument cannot be a designator.
+Added Foundational Principles section to technical.md. Established that: all tags are strictly binary; the designator is the control plane (dictates evaluation, type, and behavior); recursive nesting with logic mutation is core to expressiveness. This clarifies how the same nested structure can resolve differently based on wrapping designators.
 
 [PENDING]
