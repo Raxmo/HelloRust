@@ -44,6 +44,7 @@ Primitive values that resolve to concrete data:
 - `[null: expression]` - Existence check (returns flag)
 - `[character: name]` - Character reference or container
 - `[attribute: name]` - Attribute reference or container
+- `[input: prompt]` - Blocking text input (argument is prompt text, resolves to captured string)
 
 ### Action Designators
 Tags that execute operations affecting control flow:
@@ -416,4 +417,14 @@ Dynamic inventory management:
 [[if: [not: [null: [[[character: player]: [attribute: inventory]]: [attribute: sword]]]]: [[[option: Use sword]: [goto: [section: use_sword]]]]]
 
 [[define: [character: player]]: [[[set: [[[character: player]: [attribute: inventory]]: [attribute: sword]]: [value: 1]]]]]
+```
+
+Player name input:
+```
+[[set: [[[character: player]: [attribute: name]]: [label]]: [input: Enter your character name]]]
+```
+
+Input with conditional:
+```
+[[if: [label: [input: Type 'yes' or 'no']] == [label: yes]]: [[[option: Confirmed]: [goto: [section: confirmed]]]]]]
 ```
