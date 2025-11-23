@@ -43,3 +43,14 @@ If an item has sub-tasks:
 ## Branch Naming
 - Use lowercase with hyphens: `feature-name`, `item-name`
 - For sub-items: `parent-item/sub-item-name`
+
+## Communication Conventions
+
+### Cursor Position Reference
+Start a prompt with `>>` to reference the current cursor position in your active editor.
+
+Example:
+- `>> check this note` - Agent will read the content at your cursor location
+- `>> clarify` - Agent will review what's at your current position
+
+The agent will use the cursor position from the user state to understand context.
