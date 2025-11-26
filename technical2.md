@@ -33,7 +33,7 @@ RTags are tags that appear on the right side of a colon. They can be primitive v
 LTags are tags that appear on the left side of a colon. They determine what operation or type is being invoked. LTags never stand alone.
 
 - Primitive LTags: `if`, `set`, `value`, `character`, `section`
-- Composite LTags: `[if: condition]`, `[attribute: gold]`, `[null: expression]`
+- Composite LTags: `[if: condition]`, `[character: alice]`, `[null: expression]`
 
 **CTags (Composite Tags)**
 CTags are any tags with the structure `[ltag: rtag]`. All FTags are CTags. RTags and LTags may also be CTags if they contain the bracket-colon structure.
@@ -51,7 +51,7 @@ The language handles all the nesting—you just focus on the story.
 
 ### Everything is Data
 
-Characters, attributes, flags, and choices are all treated the same way: as data you can read, write, and compose. This uniformity makes the language predictable and learnable.
+Characters, attributes, items, and containers are all treated as data you can read, write, and compose. This uniformity makes the language predictable and learnable.
 
 ## Type System
 
@@ -81,11 +81,17 @@ Examples: A sword you either have or don't; a location you've visited or haven't
 
 ### Composite Types
 
-**Character** - A container that holds attributes and data about an entity (player, NPC, object)
+**Attribute** - A singular value of one of the primitive types (Number, Text, or Flag). Attributes are leaf values and cannot contain other attributes or items.
 
-**Attribute** - A container that holds data (can be primitive types or other attributes)
+Examples: A character's name (Text), health (Number), or visited flag (Flag)
 
-Both Character and Attribute behave identically; the distinction is semantic.
+**Container** - A structure that holds multiple attributes, items, or other containers. Containers organize and group related data.
+
+Examples: An inventory container holding sword items, a stats container holding number attributes
+
+**Character** - A special container type representing an entity (player, NPC, object) in the story. Characters can hold attributes, items, and containers.
+
+Examples: The player character, an NPC, a treasure chest
 
 ## Tag Behavior
 
@@ -102,7 +108,7 @@ Within a `define` block, Item RTags accept text labels for initialization. This 
 ```
 [[define: [character: alice]:
     [[set: [attribute: name]]: [text: Alice]]
-    [[define: [attribute: bag]]:
+    [[define: [container: bag]]:
         [item: book]
         [[set: [attribute: capacity]]: [number: 100]]
         [[set: [attribute: usage]]: [number: 1]]
@@ -112,12 +118,13 @@ Within a `define` block, Item RTags accept text labels for initialization. This 
 
 **Breaking this down:**
 - `[[define: [character: alice]:` — Begin defining character alice
-- `[[set: [attribute: name]]: [text: Alice]]` — Direct attribute assignment (set takes an LTag that becomes the assignment target, then a value RTag)
-- `[[define: [attribute: bag]]:` — Define bag as a nested container
+- `[[set: [attribute: name]]: [text: Alice]]` — Direct attribute assignment (set takes an accessor LTag and a value RTag)
+- `[[define: [container: bag]]:` — Define bag as a container that can hold attributes and items
 - `[item: book]` — Item takes text and builds a complete FTag within the define context
-- `[[set: [attribute: capacity]]: [number: 100]]` — Set takes an accessor LTag and builds a new LTag that takes a value RTag
-- `]` — End the bag define
-- `]` — End alice define
+- `[[set: [attribute: capacity]]: [number: 100]]` — Add an attribute to the container with a number value
+- `[[set: [attribute: usage]]: [number: 1]]` — Add another attribute to the container
+- `]` — End the bag container define
+- `]` — End alice character define
 
 **Key insights:**
 - Within define, property access is implicit (no need for full paths)
