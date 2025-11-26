@@ -27,16 +27,19 @@ Examples: `[goto: location]`, `[[if: condition]: tag-list]`, `[section: home]`, 
 RTags are tags that appear on the right side of a colon. They can be primitive values or composite tags, but they always require an LTag to give them meaning. RTags never stand alone.
 
 - Primitive RTags: `100`, `on`, `Alice`, `home`
-- Composite RTags: `[value: 100]`, `[text: Name]`, `[character: alice]`, `[container: inventory]`
+- Composite RTags: `[value: 100]`, `[text: Alice]`, `[character: alice]`, `[container: inventory]`, `[attribute: name]`
 
 **LTags (Left Tags)**
 LTags are tags that appear on the left side of a colon. They determine what operation or type is being invoked. LTags never stand alone.
 
-- Primitive LTags: `if`, `set`, `value`, `section`
+- Primitive LTags: `if`, `set`, `define`, `add`, `remove`, `goto`, `section`, `value`, `number`, `text`, `flag`, `item`, `character`, `attribute`, `container`
 - Composite LTags: `[if: condition]`, `[null: expression]`
 
 **CTags (Composite Tags)**
 CTags are any tags with the structure `[ltag: rtag]`. All FTags are CTags. RTags and LTags may also be CTags if they contain the bracket-colon structure.
+
+**Type Designators**
+Eight LTags serve as type or declaration designators: `value`, `number`, `text`, `flag`, `item`, `character`, `attribute`, `container`. When combined with an RTag, they form composite RTags. For example, `[number: 100]` and `[text: Alice]` are composite RTags.
 
 **Key Principle**
 A tag's role is determined by its structure and purpose, not by its context. `[value: 100]` is always an RTag. `[goto: home]` is always an FTag. This static assignment makes the language predictable.
@@ -46,8 +49,8 @@ A tag's role is determined by its structure and purpose, not by its context. `[v
 To access properties of characters and containers, use the `->` operator:
 
 ```
-[character: alice] -> [attribute: name]
-[character: alice] -> [container: bag] -> [attribute: sword]
+[[character: alice] -> [attribute: name]]
+[[[character: alice] -> [container: bag]] -> [attribute: sword]]
 ```
 
 The `->` operator chains property access left-to-right, making it intuitive for writers. Each step drills deeper into the structure.
@@ -92,23 +95,83 @@ Examples: A sword you either have or don't; a location you've visited or haven't
 
 ### Composite Types
 
-**Attribute** - A singular value of one of the primitive types (Number, Text, or Flag). Attributes are leaf values and cannot contain other attributes or items.
+**Attribute** - A singular value of one of the primitive types (Number, Text, Flag, or Item). Attributes are leaf values and cannot contain other attributes or items.
 
-Examples: A character's name (Text), health (Number), or visited flag (Flag)
+Examples: A character's name (`[attribute: name]` with value `[text: Alice]`), health (`[attribute: hp]` with `[number: 100]`), or visited flag (`[attribute: seen]` with `[flag: on]`)
 
 **Container** - A structure that holds multiple attributes, items, or other containers. Containers organize and group related data.
 
-Examples: An inventory container holding sword items, a stats container holding number attributes
+Examples: An inventory container `[container: bag]` holding sword items, a stats container `[container: stats]` holding number attributes like health and mana
 
 **Character** - A special container type representing an entity (player, NPC, object) in the story. Characters can hold attributes, items, and containers.
 
-Examples: The player character, an NPC, a treasure chest
+Examples: The player character `[character: player]`, an NPC `[character: merchant]`, a treasure chest `[character: chest]`
 
 ## Tag Behavior
 
 ## Operators
 
 ## Tag Reference
+
+### `define`
+
+**Type:** LTag (Operation)
+
+**Syntax:** `[define: declaration-target: tag-list]`
+
+**Description:** Creates a scoped initialization context for characters, containers, or attributes. Within a define block, property access is implicit, and Items accept text labels as initialization values.
+
+**Examples:**
+```
+[[define: [character: alice]:
+    [[set: [attribute: name]]: [text: Alice]]
+    [[define: [container: bag]:
+        [item: sword]
+        [[set: [attribute: capacity]]: [number: 100]]
+    ]]
+]]
+```
+
+**Key behaviors:**
+- Properties are accessed implicitly within the block (no need for full `->` paths)
+- Items can be initialized with text labels: `[item: sword]`
+- Multiple attributes and nested containers can be defined together
+
+### `add`
+
+**Type:** LTag (Operation)
+
+**Syntax:** `[[add: property-accessor]: value-rtag]`
+
+**Description:** Inserts new attributes or items into existing containers after initial definition.
+
+**Examples:**
+```
+[[set: [[character: alice] -> [container: bag]] -> [attribute: shield]]: [item]]
+```
+
+**Key behaviors:**
+- Uses property accessor targeting via `->` to specify insertion point
+- Always routes through `set` to maintain uniform modification semantics
+- Items are represented as `[item]` without labels or values
+
+### `remove`
+
+**Type:** LTag (Operation)
+
+**Syntax:** `[[remove: property-accessor]]`
+
+**Description:** Deletes attributes or items from existing containers.
+
+**Examples:**
+```
+[[remove: [[character: alice] -> [container: bag]] -> [attribute: sword]]]
+```
+
+**Key behaviors:**
+- Takes only a property accessor as its RTag
+- No value required—the target itself is deleted
+- Removes existence (for items) or the entire attribute and its value
 
 ## Examples
 
@@ -141,10 +204,24 @@ Within a `define` block, Item RTags accept text labels for initialization. This 
 - Within define, property access is implicit (no need for full paths)
 - Items accept text labels as RTags only in define blocks
 - Outside of define, Items work as existence checks without data
-{{ sugested post initialization additions
-[[define: [[character: alice]: [attribute: bag]]]:
-    [[set: [attribute: straps]]: [number: 2]]
-]
+### Post-Initialization with `add`
 
-}}
+After initial definition, use `add` to insert new items into existing containers:
+
+```
+[[set: [[character: alice] -> [container: bag]] -> [attribute: sword]]: [item]]
+```
+
+This adds a sword item to alice's bag. The item's existence is represented by `[item]` with no label or value—consistent with how all data modifications use `set`.
+
+### Post-Initialization with `remove`
+
+Use `remove` to delete attributes or items from existing containers:
+
+```
+[[remove: [[character: alice] -> [container: bag]] -> [attribute: sword]]]
+```
+
+This removes the sword item from alice's bag. The `remove` LTag takes a property accessor as its RTag and requires no value—the attribute itself is the target.
+
 ## Script Execution Flow
