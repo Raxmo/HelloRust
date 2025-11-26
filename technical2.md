@@ -12,7 +12,7 @@ Every tag in Packard follows a simple, consistent pattern: **[left: right]**
 
 This uniformity makes the language learnable and predictable. Once you understand the pattern, you can build sophisticated stories from simple, repeatable pieces.
 
-**Exceptions:** Tag lists (sequences of instructions) and operators (like `+`, `>`, `and`) don't follow the `[left: right]` pattern. These are special cases, but they're easy to recognize and understand in context.
+**Exceptions:** Tag lists (sequences of instructions), operators (like `+`, `>`, `and`), and the property accessor (`->`) don't follow the `[left: right]` pattern. These are special cases, but they're easy to recognize and understand in context.
 
 ### Tag Roles: FTags, LTags, RTags, and CTags
 
@@ -27,13 +27,13 @@ Examples: `[goto: location]`, `[[if: condition]: tag-list]`, `[section: home]`, 
 RTags are tags that appear on the right side of a colon. They can be primitive values or composite tags, but they always require an LTag to give them meaning. RTags never stand alone.
 
 - Primitive RTags: `100`, `on`, `Alice`, `home`
-- Composite RTags: `[value: 100]`, `[label: Name]`, `[character: alice]`
+- Composite RTags: `[value: 100]`, `[text: Name]`, `[character: alice]`, `[container: inventory]`
 
 **LTags (Left Tags)**
 LTags are tags that appear on the left side of a colon. They determine what operation or type is being invoked. LTags never stand alone.
 
-- Primitive LTags: `if`, `set`, `value`, `character`, `section`
-- Composite LTags: `[if: condition]`, `[character: alice]`, `[null: expression]`
+- Primitive LTags: `if`, `set`, `value`, `section`
+- Composite LTags: `[if: condition]`, `[null: expression]`
 
 **CTags (Composite Tags)**
 CTags are any tags with the structure `[ltag: rtag]`. All FTags are CTags. RTags and LTags may also be CTags if they contain the bracket-colon structure.
@@ -41,11 +41,22 @@ CTags are any tags with the structure `[ltag: rtag]`. All FTags are CTags. RTags
 **Key Principle**
 A tag's role is determined by its structure and purpose, not by its context. `[value: 100]` is always an RTag. `[goto: home]` is always an FTag. This static assignment makes the language predictable.
 
+### Property Access with the Accessor Operator
+
+To access properties of characters and containers, use the `->` operator:
+
+```
+[character: alice] -> [attribute: name]
+[character: alice] -> [container: bag] -> [attribute: sword]
+```
+
+The `->` operator chains property access left-to-right, making it intuitive for writers. Each step drills deeper into the structure.
+
 ### Nesting and Composition
 
 Tags can contain other tags. This lets you build sophisticated logic by stacking simple pieces.
 
-Example: A conditional that sets a value based on a condition, which itself depends on a character attribute.
+Example: A conditional that sets a value based on a condition, which itself depends on a character's container property.
 
 The language handles all the nesting—you just focus on the story.
 
