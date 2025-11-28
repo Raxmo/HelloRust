@@ -225,6 +225,26 @@ Attributes hold typed values (Number, Text, Flag). Items represent existence wit
 - No value required—the target itself is deleted
 - Removes existence (for items) or the entire attribute and its value
 
+### `become`
+
+**Type:** LTag (Type Coercion)
+
+**Syntax:** `[become: [type: rtag]]`
+
+**Description:** Explicitly coerces a value to a different type. The compiler validates that the conversion is semantically valid at compile time.
+
+**Examples:**
+```
+[become: [text: [attribute: hp]]]
+[become: [number: [text: 100]]]
+```
+
+**Key behaviors:**
+- Asserts the source type is known and valid
+- Validates the target type conversion at compile time
+- Returns the coerced value as the target type
+- Invalid conversions (e.g., arbitrary text to number) are compile-time errors
+
 ## Examples
 
 ### Defining a Character with Items
@@ -287,3 +307,47 @@ This removes the sword item from alice's bag. The `remove` LTag takes a property
 ### Results and Side Effects
 
 ### Script Entry and Exit Points
+
+## Compilation and Semantics
+
+Packard performs complete static analysis at script load time. This means syntax errors, type mismatches, undefined references, and failed assertions are all discovered when the script is opened—before any execution begins. Writers receive immediate feedback on script integrity.
+
+### Parsing and Grammar
+
+The parser validates that all tags follow the `[left: right]` structure and that exceptions (tag lists, operators, `->`) are used correctly. Malformed tags are rejected immediately with clear error messages indicating location and issue.
+
+Example errors caught:
+- Missing colons: `[if condition]` (should be `[if: condition]`)
+- Mismatched brackets: `[character: alice`
+- Invalid nesting: `[[set: [attribute: name]: [text: Alice]]: [number: 100]]` (nested too deep)
+
+### Type Resolution and Inference
+
+The compiler traces property access chains to determine types. When `[character: alice] -> [attribute: hp]` is accessed, the compiler verifies:
+- That `alice` is declared as a character
+- That `alice` has a `bag` container
+- That `bag` has an `hp` attribute
+- What type `hp` holds (Number, Text, Flag, or Item)
+
+Type mismatches are reported at load time.
+
+### Scope and Symbol Resolution
+
+Symbols (character, container, attribute names) are resolved within their scopes. `define` blocks create local symbol tables. References to undefined symbols are caught at load time.
+
+Example errors caught:
+- `[character: unknown]` when `unknown` was never declared
+- `[[character: alice] -> [container: undefined]]` when alice has no such container
+
+### Semantic Validation
+
+Beyond syntax and symbols, the compiler validates semantic rules:
+- Type assertions on reads: `[number: [attribute: hp]]` asserts hp is numeric at compile time
+- Type coercion with `[become: [type: value]]` is validated—conversions between types are checked. For example, `[become: [text: [attribute: hp]]]` coerces hp to text, with an assertion that the conversion is valid.
+
+### Error Handling and Assertions
+
+Failed assertions are compilation errors. If a script asserts a type or condition that cannot be proven true from the declarations, the compiler rejects the script with a detailed error message showing:
+- What assertion failed
+- Where in the script
+- What type or value was expected vs. what was found
