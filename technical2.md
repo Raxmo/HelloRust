@@ -72,9 +72,9 @@ Characters, attributes, items, and containers are all treated as data you can re
 Packard has four primitive types that form the foundation of all data:
 
 ### Number
-Integers representing quantities, counts, and numerical values.
+Floating-point numbers representing quantities, counts, and numerical values. Stored internally as floats for operational flexibility, though typically used with integer values for narrative data.
 
-Examples: `100`, `-5`, `0`, `9001`
+Examples: `100`, `-5`, `0`, `9001`, `3.14`, `-2.5`
 
 ### Text
 Strings representing names, dialogue, descriptions, and any text content.
@@ -169,6 +169,12 @@ Attributes hold typed values (Number, Text, Flag). Items represent existence wit
 - `nand` (Logical NAND)
 - `xnor` (Exclusive NOR)
 
+### Rounding Operators
+
+- `[floor: number]` (Round Down)
+- `[ceiling: number]` (Round Up)
+- `[round: number]` (Round to Nearest Integer)
+
 ## Tag Reference
 
 ### `define`
@@ -235,14 +241,14 @@ Attributes hold typed values (Number, Text, Flag). Items represent existence wit
 
 **Type:** LTag (Type Coercion)
 
-**Syntax:** `[become: [type: rtag]]`
+**Syntax:** `[[become: type]: access-or-value]`
 
 **Description:** Explicitly coerces a value to a different type. The compiler validates that the conversion is semantically valid at compile time.
 
 **Examples:**
 ```
-[become: [text: [attribute: hp]]]
-[become: [number: [text: 100]]]
+[[become: text]: [attribute: hp]]
+[[become: number]: [text: 100]]
 ```
 
 **Key behaviors:**
@@ -349,7 +355,7 @@ Example errors caught:
 
 Beyond syntax and symbols, the compiler validates semantic rules:
 - Type assertions on reads: `[number: [attribute: hp]]` asserts hp is numeric at compile time
-- Type coercion with `[become: [type: value]]` is validated—conversions between types are checked. For example, `[become: [text: [attribute: hp]]]` coerces hp to text, with an assertion that the conversion is valid.
+- Type coercion with `[[become: type]: value]` is validated—conversions between types are checked. For example, `[[become: text]: [attribute: hp]]` coerces hp to text, with an assertion that the conversion is valid.
 
 ### Error Handling and Assertions
 
