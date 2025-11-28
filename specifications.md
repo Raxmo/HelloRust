@@ -261,33 +261,32 @@ Attributes hold typed values (Number, Text, Flag). Items represent existence wit
 
 ### Defining a Character with Items
 
-Within a `define` block, Item RTags accept text labels for initialization. This allows you to declare items without needing data values.
+Within a `define` block, items are added through `set` with the bare `[item]` RTag. This allows you to declare items as attributes without needing data values.
 
 ```
 [[define: [character: alice]:
     [[set: [attribute: name]]: [text: Alice]]
-    [[define: [container: bag]]:
-        [item: book]
+    [[define: [container: bag]:
+        [[set: [attribute: book]]: [item]]
         [[set: [attribute: capacity]]: [number: 100]]
         [[set: [attribute: usage]]: [number: 1]]
-    ]
-]
+    ]]
+]]
 ```
 
 **Breaking this down:**
 - `[[define: [character: alice]:` — Begin defining character alice
 - `[[set: [attribute: name]]: [text: Alice]]` — Direct attribute assignment (set takes an accessor LTag and a value RTag)
-- `[[define: [container: bag]]:` — Define bag as a container that can hold attributes and items
-- `[item: book]` — Item takes text and builds a complete FTag within the define context
+- `[[define: [container: bag]:` — Define bag as a container that can hold attributes and items
+- `[[set: [attribute: book]]: [item]]` — Add an item attribute named book using bare `[item]` RTag
 - `[[set: [attribute: capacity]]: [number: 100]]` — Add an attribute to the container with a number value
 - `[[set: [attribute: usage]]: [number: 1]]` — Add another attribute to the container
-- `]` — End the bag container define
-- `]` — End alice character define
+- `]]` — End the bag container define and alice character define
 
 **Key insights:**
 - Within define, property access is implicit (no need for full paths)
-- Items accept text labels as RTags only in define blocks
-- Outside of define, Items work as existence checks without data
+- All attributes and items use `set` for uniform modification semantics
+- Items are represented as bare `[item]` with no label or value
 ### Post-Initialization with `add`
 
 After initial definition, use `add` to insert new items into existing containers:
@@ -337,8 +336,7 @@ Example errors caught:
 
 The compiler traces property access chains to determine types. When `[character: alice] -> [attribute: hp]` is accessed, the compiler verifies:
 - That `alice` is declared as a character
-- That `alice` has a `bag` container
-- That `bag` has an `hp` attribute
+- That `alice` has an `hp` attribute
 - What type `hp` holds (Number, Text, Flag, or Item)
 
 Type mismatches are reported at load time.
