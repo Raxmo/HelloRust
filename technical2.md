@@ -93,7 +93,13 @@ A type representing existence without data. Used for inventory, optional attribu
 
 Examples: A sword you either have or don't; a location you've visited or haven't
 
-### Composite Types
+### Value Types vs. Structural Types
+
+The four primitives (Number, Text, Flag, Item) are **value types**—they represent actual data values. They behave independently and can be assigned, compared, and manipulated.
+
+Attribute, Container, and Character are **structural types**—they are declarations that organize and hold primitive values. They do not represent data themselves; instead, they define how data is organized within a script. You cannot assign a value directly to a Character; you must first declare its attributes and containers, then populate those with primitive values.
+
+### Structural Types
 
 **Attribute** - A singular value of one of the primitive types (Number, Text, Flag, or Item). Attributes are leaf values and cannot contain other attributes or items.
 
