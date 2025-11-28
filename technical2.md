@@ -109,7 +109,59 @@ Examples: The player character `[character: player]`, an NPC `[character: mercha
 
 ## Tag Behavior
 
+### Resolution and Evaluation Flow
+
+Tags are evaluated recursively from the innermost expressions outward. RTags are resolved to values before being passed to LTags, which then perform operations or transformations.
+
+### Implicit Property Access in Define Blocks
+
+Within `define` blocks, properties are accessed without requiring the full `->` chain. The implicit context allows nested definitions to reference parent containers and attributes directly.
+
+### Property Accessor Chaining
+
+The `->` operator chains property access left-to-right. Each step returns an RTag representing the accessed property, which can be further chained or passed to an LTag.
+
+### Scope and Context
+
+Properties and attributes defined within a `define` block belong to their target declaration. Nested `define` blocks create child contexts within their parent, but changes persist after the block closes.
+
+### Type Behavior
+
+Attributes hold typed values (Number, Text, Flag). Items represent existence without value. Type mismatches are handled through assertions and casting (see type system).
+
 ## Operators
+
+### Arithmetic Operators
+
+- `+` (Addition)
+- `-` (Subtraction)
+- `*` (Multiplication)
+- `/` (Division)
+- `+=` (Add and Assign)
+- `-=` (Subtract and Assign)
+- `*=` (Multiply and Assign)
+- `/=` (Divide and Assign)
+- `++` (Increment)
+- `--` (Decrement)
+
+### Comparison Operators
+
+- `>` (Greater Than)
+- `<` (Less Than)
+- `=` (Equal To)
+- `!=` (Not Equal To)
+- `>=` (Greater Than or Equal)
+- `<=` (Less Than or Equal)
+
+### Logical Operators
+
+- `and` (Logical AND)
+- `or` (Logical OR)
+- `not` (Logical NOT)
+- `xor` (Exclusive OR)
+- `nor` (Logical NOR)
+- `nand` (Logical NAND)
+- `xnor` (Exclusive NOR)
 
 ## Tag Reference
 
@@ -117,7 +169,7 @@ Examples: The player character `[character: player]`, an NPC `[character: mercha
 
 **Type:** LTag (Operation)
 
-**Syntax:** `[define: declaration-target: tag-list]`
+**Syntax:** `[[define: declaration-target]: tag-list]`
 
 **Description:** Creates a scoped initialization context for characters, containers, or attributes. Within a define block, property access is implicit, and Items accept text labels as initialization values.
 
@@ -126,7 +178,7 @@ Examples: The player character `[character: player]`, an NPC `[character: mercha
 [[define: [character: alice]:
     [[set: [attribute: name]]: [text: Alice]]
     [[define: [container: bag]:
-        [item: sword]
+        [[set: [attribute: sword]]: [item:]]
         [[set: [attribute: capacity]]: [number: 100]]
     ]]
 ]]
@@ -134,7 +186,7 @@ Examples: The player character `[character: player]`, an NPC `[character: mercha
 
 **Key behaviors:**
 - Properties are accessed implicitly within the block (no need for full `->` paths)
-- Items can be initialized with text labels: `[item: sword]`
+- All attributes and items use `set` for uniform modification semantics
 - Multiple attributes and nested containers can be defined together
 
 ### `add`
@@ -225,3 +277,13 @@ Use `remove` to delete attributes or items from existing containers:
 This removes the sword item from alice's bag. The `remove` LTag takes a property accessor as its RTag and requires no value—the attribute itself is the target.
 
 ## Script Execution Flow
+
+### Execution Order of Nested Tags
+
+### Tag Evaluation and Resolution
+
+### Control Flow with Conditionals
+
+### Results and Side Effects
+
+### Script Entry and Exit Points
