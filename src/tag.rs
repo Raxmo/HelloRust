@@ -77,6 +77,15 @@ impl Primitive {
             Primitive::Keyword(s) => s.clone(),
         }
     }
+
+    pub fn as_text(&self) -> Option<String> {
+        match self {
+            Primitive::Identifier(s) => Some(s.clone()),
+            Primitive::String(s) => Some(s.clone()),
+            Primitive::Keyword(kw) => Some(kw.clone()),
+            Primitive::Number(_) => None,
+        }
+    }
 }
 
 impl TagNode {

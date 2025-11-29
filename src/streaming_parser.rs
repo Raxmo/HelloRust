@@ -65,7 +65,7 @@ impl StreamingParser {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<TagNode>, String> {
+    pub fn parse(&mut self) -> Result<TagNode, String> {
         let mut tags = Vec::new();
 
         while self.current() != &Token::Eof {
@@ -73,7 +73,62 @@ impl StreamingParser {
             tags.push(tag);
         }
 
-        Ok(tags)
+        // Wrap all top-level tags in an implicit root list
+        Self::create_root(tags)
+    }
+
+    fn create_root(tags: Vec<TagNode>) -> Result<TagNode, String> {
+        if tags.is_empty() {
+            // Empty program: root with empty list
+            Ok(TagNode::Composite {
+                ltag: Box::new(TagNode::Primitive(Primitive::Keyword("root".to_string()))),
+                rtag: Box::new(Self::create_list_node(vec![])),
+            })
+        } else if tags.len() == 1 {
+            // Single tag: root wrapping it
+            Ok(TagNode::Composite {
+                ltag: Box::new(TagNode::Primitive(Primitive::Keyword("root".to_string()))),
+                rtag: Box::new(Self::create_list_node(tags)),
+            })
+        } else {
+            // Multiple tags: wrap in list under root
+            Ok(TagNode::Composite {
+                ltag: Box::new(TagNode::Primitive(Primitive::Keyword("root".to_string()))),
+                rtag: Box::new(Self::create_list_node(tags)),
+            })
+        }
+    }
+
+    fn create_list_node(mut tags: Vec<TagNode>) -> TagNode {
+        if tags.is_empty() {
+            // Empty list
+            TagNode::Composite {
+                ltag: Box::new(TagNode::Primitive(Primitive::Keyword("list".to_string()))),
+                rtag: Box::new(TagNode::Primitive(Primitive::Keyword("item".to_string()))),
+            }
+        } else if tags.len() == 1 {
+            // Single item in list
+            TagNode::Composite {
+                ltag: Box::new(TagNode::Primitive(Primitive::Keyword("list".to_string()))),
+                rtag: Box::new(tags.pop().unwrap()),
+            }
+        } else {
+            // Multiple items: nest them as [item: next]
+            tags.reverse();
+            let mut list_node = tags.pop().unwrap();
+            
+            while let Some(tag) = tags.pop() {
+                list_node = TagNode::Composite {
+                    ltag: Box::new(tag),
+                    rtag: Box::new(list_node),
+                };
+            }
+            
+            TagNode::Composite {
+                ltag: Box::new(TagNode::Primitive(Primitive::Keyword("list".to_string()))),
+                rtag: Box::new(list_node),
+            }
+        }
     }
 
     fn parse_one_tag(&mut self) -> Result<TagNode, String> {

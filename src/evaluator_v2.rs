@@ -24,6 +24,7 @@ pub struct Evaluator {
     frames: Vec<Frame>, // Call stack for scoping
     log_file: Option<File>,
     eval_counter: usize,
+    pub defined_attributes: std::collections::HashSet<String>, // Track attributes defined during load
 }
 
 impl Evaluator {
@@ -34,6 +35,7 @@ impl Evaluator {
             frames: vec![Frame::new()], // Start with global frame
             log_file: Some(log_file),
             eval_counter: 0,
+            defined_attributes: std::collections::HashSet::new(),
         })
     }
 
@@ -47,6 +49,53 @@ impl Evaluator {
             file.flush()?;
         }
         Ok(())
+    }
+
+    pub fn validate(&self, root: &TagNode) -> Result<(), String> {
+        self.validate_tag(root, &std::collections::HashSet::new())
+    }
+
+    fn validate_tag(&self, tag: &TagNode, _scope: &std::collections::HashSet<String>) -> Result<(), String> {
+        match tag {
+            TagNode::Primitive(_) => Ok(()),
+            TagNode::Composite { ltag, rtag } => {
+                // Validate both sides
+                self.validate_tag(ltag, _scope)?;
+                self.validate_tag(rtag, _scope)?;
+                
+                // Check operation is valid
+                if let TagNode::Primitive(prim) = ltag.as_ref() {
+                    if let Some(op_name) = prim.as_text() {
+                        match op_name.as_str() {
+                            "root" | "list" | "character" | "define" | "text" | "number" 
+                            | "flag" | "item" | "set" | "attribute" => Ok(()),
+                            _ => Err(format!("Unknown operation: '{}'", op_name)),
+                        }
+                    } else {
+                        Ok(()) // Non-text ltag is fine (gets caught at runtime if invalid)
+                    }
+                } else {
+                    Ok(()) // Complex ltag is fine (will be evaluated)
+                }
+            }
+        }
+    }
+
+    pub fn execute_root(&mut self, root: &TagNode) -> Result<Value, String> {
+        self.writeln_log("=== Validation ===\n")
+            .map_err(|e| format!("Log error: {}", e))?;
+        
+        self.validate(root)?;
+        
+        self.writeln_log("=== Evaluation Trace ===\n")
+            .map_err(|e| format!("Log error: {}", e))?;
+
+        let result = self.evaluate_tag(root)?;
+
+        self.writeln_log("\n=== Evaluation Complete ===")
+            .map_err(|e| format!("Log error: {}", e))?;
+
+        Ok(result)
     }
 
     pub fn evaluate_tags(&mut self, tags: &[TagNode]) -> Result<(), String> {
@@ -138,6 +187,7 @@ impl Evaluator {
             Value::Text(ref op_name) => {
                 // Dispatch based solely on operation name
                 match op_name.as_str() {
+                    "root" => self.handle_root(rtag),
                     "character" => self.handle_character(rtag),
                     "define" => self.handle_define(rtag),
                     "list" => self.handle_list(rtag),
@@ -156,6 +206,12 @@ impl Evaluator {
                 Ok(rtag.clone())
             }
         }
+    }
+
+    fn handle_root(&mut self, rtag: &Value) -> Result<Value, String> {
+        // Root just executes its content (the implicit list)
+        // The actual execution happens through normal tag evaluation
+        Ok(rtag.clone())
     }
 
     fn handle_character(&mut self, rtag: &Value) -> Result<Value, String> {

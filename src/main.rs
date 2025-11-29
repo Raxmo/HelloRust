@@ -41,28 +41,27 @@ fn main() {
 
     // Parse
     let mut parser = StreamingParser::new(tokens);
-    let tags = match parser.parse() {
-        Ok(tags) => tags,
+    let root = match parser.parse() {
+        Ok(root) => root,
         Err(e) => {
             eprintln!("Parse error: {}", e);
             std::process::exit(1);
         }
     };
 
-    println!("\nParsed {} tags", tags.len());
-    for (i, tag) in tags.iter().enumerate() {
-        println!("  Tag {}: {}", i, format_tag(tag, 2));
-    }
+    println!("\nParsed root tag:");
+    println!("  {}", format_tag(&root, 2));
 
     // Evaluate with logging
     match Evaluator::new("eval_trace.log") {
         Ok(mut evaluator) => {
-            match evaluator.evaluate_tags(&tags) {
-                Ok(_) => {
+            match evaluator.execute_root(&root) {
+                Ok(result) => {
                     println!("\nEvaluation trace written to eval_trace.log");
+                    println!("Result: {}", result);
                     println!("Variable store:");
                     for (key, value) in &evaluator.store {
-                        println!("  {}: {:?}", key, value);
+                        println!("  {}: {}", key, value);
                     }
                 }
                 Err(e) => {
