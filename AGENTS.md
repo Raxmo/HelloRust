@@ -1,5 +1,12 @@
 # Agent Instructions for Packard Script Language
 
+## Communication Conventions
+
+**Cursor Position Reference**
+- When you start a prompt with `{>`, interpret it as "at my cursor in neovim"
+- Always verify file has been saved before proceeding (check file modification time if needed)
+- If you reference updating something in a file, double-check the file reflects the change
+
 ## Workflow
 
 ### Before Starting Work
