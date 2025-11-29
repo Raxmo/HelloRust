@@ -1,47 +1,30 @@
 use std::fmt;
 
-// Token enum represents all possible token types in the Packard Script Language
-// #[derive(Debug, Clone, PartialEq)] means Rust auto-generates these traits for us:
-//   - Debug: allows {:?} printing (like C++ operator<< for debugging)
-//   - Clone: allows creating copies of tokens (explicit, unlike C++ copy constructors)
-//   - PartialEq: allows == comparisons between tokens
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
-    // Structural tokens (brackets and punctuation)
-    OpenBracket,      // [
-    CloseBracket,     // ]
-    Colon,            // :
-    Comma,            // ,
-    Arrow,            // ->
-    
-    // Literals and identifiers (these carry data)
-    // In Rust enums, variants can hold associated data (like tagged unions in C++)
-    Identifier(String),  // variable names, operation names, etc
-    Number(f64),         // floating point numbers
-    String(String),      // quoted strings
-    Keyword(String),     // special keywords like "on", "off", "and", "or", "not"
-    
-    // Arithmetic operators
-    Plus,             // +
-    Minus,            // -
-    Star,             // *
-    Slash,            // /
-    
-    // Comparison operators
-    Eq,               // =
-    NotEq,            // !=
-    Gt,               // >
-    Lt,               // <
-    GtEq,             // >=
-    LtEq,             // <=
-    
-    // Logical operators
-    And,              // and
-    Or,               // or
-    Not,              // not
-    
-    // End of input
-    Eof,              // End of file marker
+    OpenBracket,
+    CloseBracket,
+    Colon,
+    Comma,
+    Arrow,
+    Identifier(String),
+    Number(f64),
+    String(String),
+    Keyword(String),
+    Plus,
+    Minus,
+    Star,
+    Slash,
+    Eq,
+    NotEq,
+    Gt,
+    Lt,
+    GtEq,
+    LtEq,
+    And,
+    Or,
+    Not,
+    Eof,
 }
 
 impl fmt::Display for Token {

@@ -9,29 +9,21 @@
 [Eval 2] Operation: list
 [Eval 2] Evaluating rtag...
 [Eval 3] Composite tag: [ltag: rtag]
-[Eval 3] Operation: define
+[Eval 3] Operation: set
 [Eval 4] Composite tag: [ltag: rtag]
-[Eval 4] Operation: list
+[Eval 4] Operation: attribute
 [Eval 4] Evaluating rtag...
-[Eval 5] Composite tag: [ltag: rtag]
-[Eval 5] Operation: set
+[Eval 5] Primitive: name => "name"
+[Eval 4]   rtag evaluated to: "name"
+[Eval 4] Handler result: &name
 [Eval 6] Composite tag: [ltag: rtag]
-[Eval 6] Operation: attribute
+[Eval 6] Operation: text
 [Eval 6] Evaluating rtag...
-[Eval 7] Primitive: name => "name"
-[Eval 6]   rtag evaluated to: "name"
-[Eval 6] Handler result: &name
-[Eval 8] Composite tag: [ltag: rtag]
-[Eval 8] Operation: text
-[Eval 8] Evaluating rtag...
-[Eval 9] Primitive: Alice => "Alice"
-[Eval 8]   rtag evaluated to: "Alice"
-[Eval 8] Handler result: "Alice"
-[Eval 5] Handler result: "Alice"
-[Eval 4]   rtag evaluated to: "Alice"
-[Eval 4] Handler result: item
-[Eval 3] Handler result: item
-[Eval 2]   rtag evaluated to: item
+[Eval 7] Primitive: Alice => "Alice"
+[Eval 6]   rtag evaluated to: "Alice"
+[Eval 6] Handler result: "Alice"
+[Eval 3] Handler result: "Alice"
+[Eval 2]   rtag evaluated to: "Alice"
 [Eval 2] Handler result: item
 [Eval 1]   rtag evaluated to: item
 [Eval 1] Handler result: item
