@@ -60,6 +60,30 @@ impl Primitive {
             },
         }
     }
+
+    pub fn as_text(&self) -> Option<String> {
+        match self {
+            Primitive::Identifier(s) => Some(s.clone()),
+            Primitive::String(s) => Some(s.clone()),
+            Primitive::Keyword(kw) => Some(kw.clone()),
+            Primitive::Number(_) => None,
+        }
+    }
+
+    pub fn as_display_string(&self) -> String {
+        match self {
+            Primitive::Identifier(s) => s.clone(),
+            Primitive::Number(n) => {
+                if n.fract() == 0.0 {
+                    format!("{}", *n as i64)
+                } else {
+                    format!("{}", n)
+                }
+            }
+            Primitive::String(s) => format!("\"{}\"", s),
+            Primitive::Keyword(s) => s.clone(),
+        }
+    }
 }
 
 impl TagNode {

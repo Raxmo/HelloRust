@@ -36,16 +36,26 @@ fn main() {
     };
 
     println!("Tokens ({} total):", tokens.len());
-    for (i, token) in tokens.iter().enumerate() {
-        println!("  {}: {:?}", i, token);
+    for (i, token_with_pos) in tokens.iter().enumerate() {
+        println!(
+            "  {}: {:?} at line {}, col {}",
+            i, token_with_pos.token, token_with_pos.pos.line, token_with_pos.pos.column
+        );
     }
 
     // Stage 2: Parse (see src/streaming_parser.rs)
-    let mut parser = StreamingParser::new(tokens);
+    let mut parser = StreamingParser::new(tokens, source.clone());
     let root = match parser.parse() {
         Ok(root) => root,
         Err(e) => {
-            eprintln!("Parse error: {}", e);
+            let error_msg = format!("Parse error: {}", e);
+            eprintln!("{}", error_msg);
+            
+            // Log error to file
+            if let Err(io_err) = std::fs::write("parse_error.log", &error_msg) {
+                eprintln!("Could not write error log: {}", io_err);
+            }
+            
             std::process::exit(1);
         }
     };
@@ -66,7 +76,14 @@ fn main() {
                     }
                 }
                 Err(e) => {
-                    eprintln!("Evaluation error: {}", e);
+                    let error_msg = format!("Evaluation error: {}", e);
+                    eprintln!("{}", error_msg);
+                    
+                    // Log error to file
+                    if let Err(io_err) = std::fs::write("eval_error.log", &error_msg) {
+                        eprintln!("Could not write error log: {}", io_err);
+                    }
+                    
                     std::process::exit(1);
                 }
             }
@@ -79,20 +96,18 @@ fn main() {
 }
 
 // Format a TagNode tree for pretty-printing with indentation.
-// Primitives display as their text representation.
-// Composites recursively format ltag and rtag with increased indentation.
+// Shows ltag/rtag traversal at each level.
 fn format_tag(tag: &tag::TagNode, indent: usize) -> String {
     let ind = " ".repeat(indent);
     match tag {
         tag::TagNode::Primitive(prim) => prim.as_display_string(),
         tag::TagNode::Composite { ltag, rtag } => {
+            let ltag_str = format_tag(ltag, indent + 2);
+            let rtag_str = format_tag(rtag, indent + 2);
             format!(
                 "[\n{}ltag: {}\n{}rtag: {}\n{}]",
-                ind,
-                format_tag(ltag, indent + 2),
-                ind,
-                format_tag(rtag, indent + 2),
-                " ".repeat(indent - 2)
+                ind, ltag_str, ind, rtag_str,
+                " ".repeat(if indent > 0 { indent - 2 } else { 0 })
             )
         }
     }

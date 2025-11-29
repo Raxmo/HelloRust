@@ -44,6 +44,7 @@ pub struct Evaluator {
     frames: Vec<Frame>, // Call stack for scoping
     log_file: Option<File>,
     eval_counter: usize,
+    eval_depth: usize, // Track indentation depth for logging
     pub defined_attributes: std::collections::HashSet<String>, // Track attributes defined during load
 }
 
@@ -55,6 +56,7 @@ impl Evaluator {
             frames: vec![Frame::new()], // Start with global frame
             log_file: Some(log_file),
             eval_counter: 0,
+            eval_depth: 0,
             defined_attributes: std::collections::HashSet::new(),
         })
     }
@@ -73,6 +75,17 @@ impl Evaluator {
             TagNode::Composite { ltag: inner_ltag, rtag: _inner_rtag } => {
                 // Walk the ltag chain to find the innermost primitive
                 self.extract_operation_name(inner_ltag)
+            }
+        }
+    }
+
+    /// Log traversal into ltag to extract operation name
+    fn log_ltag_extraction(&mut self, ltag: &TagNode) -> std::io::Result<()> {
+        match ltag {
+            TagNode::Primitive(_) => Ok(()),
+            TagNode::Composite { ltag: inner_ltag, rtag: _inner_rtag } => {
+                self.writeln_log(&format!("[Eval] Extracting operation from ltag"))?;
+                self.log_ltag_extraction(inner_ltag)
             }
         }
     }
@@ -129,7 +142,8 @@ impl Evaluator {
 
     fn writeln_log(&mut self, msg: &str) -> std::io::Result<()> {
         if let Some(ref mut file) = self.log_file {
-            writeln!(file, "{}", msg)?;
+            let indent = " ".repeat(self.eval_depth * 2);
+            writeln!(file, "{}{}", indent, msg)?;
             file.flush()?;
         }
         Ok(())
@@ -193,8 +207,9 @@ impl Evaluator {
     pub fn evaluate_tag(&mut self, tag: &TagNode) -> Result<Value, String> {
         self.eval_counter += 1;
         let eval_id = self.eval_counter;
+        self.eval_depth += 1;
 
-        match tag {
+        let result = match tag {
             TagNode::Primitive(prim) => {
                 let value = prim.to_value();
                 self.writeln_log(&format!(
@@ -207,17 +222,18 @@ impl Evaluator {
                 Ok(value)
             }
             TagNode::Composite { ltag, rtag } => {
-                self.writeln_log(&format!("[Eval {}] Composite tag: [ltag: rtag]", eval_id))
+                self.writeln_log(&format!("[Eval {}] Composite tag", eval_id))
+                    .map_err(|e| format!("Log error: {}", e))?;
+
+                // Log ltag extraction
+                self.log_ltag_extraction(ltag)
                     .map_err(|e| format!("Log error: {}", e))?;
 
                 // Extract operation name from ltag (walk to innermost primitive if ltag is composite)
                 let op_name = self.extract_operation_name(ltag)?;
 
-                self.writeln_log(&format!(
-                    "[Eval {}] Operation: {}",
-                    eval_id, op_name
-                ))
-                .map_err(|e| format!("Log error: {}", e))?;
+                self.writeln_log(&format!("[Eval {}] Operation: {}", eval_id, op_name))
+                    .map_err(|e| format!("Log error: {}", e))?;
 
                 // Dispatch based on operation - some ops need special handling
                 let result = match op_name.as_str() {
@@ -231,23 +247,26 @@ impl Evaluator {
                     }
                     _ => {
                         // For other operations, evaluate rtag normally and dispatch
-                        self.writeln_log(&format!("[Eval {}] Evaluating rtag...", eval_id))
+                        self.writeln_log(&format!("[Eval {}] Evaluating rtag", eval_id))
                             .map_err(|e| format!("Log error: {}", e))?;
                         let rtag_value = self.evaluate_tag(rtag)?;
 
-                        self.writeln_log(&format!("[Eval {}]   rtag evaluated to: {}", eval_id, rtag_value))
+                        self.writeln_log(&format!("[Eval {}] rtag => {}", eval_id, rtag_value))
                             .map_err(|e| format!("Log error: {}", e))?;
 
                         self.execute_operation(&op_name, &rtag_value)?
                     }
                 };
 
-                self.writeln_log(&format!("[Eval {}] Handler result: {}", eval_id, result))
+                self.writeln_log(&format!("[Eval {}] Result: {}", eval_id, result))
                     .map_err(|e| format!("Log error: {}", e))?;
 
                 Ok(result)
             }
-        }
+        };
+
+        self.eval_depth -= 1;
+        result
     }
 
     fn execute_operation(&mut self, op_name: &str, rtag_value: &Value) -> Result<Value, String> {

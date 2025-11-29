@@ -1,0 +1,2 @@
+Parse error: Parse error at line 5, column 2 (byte 85) (inside 2 nested tags): rtag already set
+Context: ltag=set rtag=set

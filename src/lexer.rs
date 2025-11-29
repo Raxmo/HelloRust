@@ -1,5 +1,18 @@
 use std::fmt;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Position {
+    pub byte_offset: usize,
+    pub line: usize,
+    pub column: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct TokenWithPos {
+    pub token: Token,
+    pub pos: Position,
+}
+
 macro_rules! tokens {
     (
         $( ($char_match:expr, $variant:ident, $display:expr, $handler:expr) ),* $(,)?
@@ -140,6 +153,8 @@ tokens!(
 pub struct Lexer {
     input: Vec<char>,
     position: usize,
+    line: usize,
+    column: usize,
 }
 
 impl Lexer {
@@ -147,6 +162,16 @@ impl Lexer {
         Lexer {
             input: input.chars().collect(),
             position: 0,
+            line: 1,
+            column: 1,
+        }
+    }
+
+    fn get_position(&self) -> Position {
+        Position {
+            byte_offset: self.position,
+            line: self.line,
+            column: self.column,
         }
     }
 
@@ -168,6 +193,14 @@ impl Lexer {
     }
 
     fn advance(&mut self) {
+        if let Some(ch) = self.current() {
+            if ch == '\n' {
+                self.line += 1;
+                self.column = 1;
+            } else {
+                self.column += 1;
+            }
+        }
         self.position += 1;
     }
 
@@ -309,14 +342,15 @@ impl Lexer {
 }
 
 // Tokenize source code into a vector of tokens
-pub fn tokenize(input: &str) -> Result<Vec<Token>, String> {
+pub fn tokenize(input: &str) -> Result<Vec<TokenWithPos>, String> {
     let mut lexer = Lexer::new(input);
     let mut tokens = Vec::new();
 
     loop {
+        let pos = lexer.get_position();
         let token = lexer.next_token()?;
         let is_eof = token == Token::Eof;
-        tokens.push(token);
+        tokens.push(TokenWithPos { token, pos });
         if is_eof {
             break;
         }
