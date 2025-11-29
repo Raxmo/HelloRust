@@ -1,1 +1,1 @@
-/home/kettu/Projects/HelloRust/target/debug/hello-rust: /home/kettu/Projects/HelloRust/src/main.rs
+/home/kettu/Projects/HelloRust/target/debug/hello-rust: /home/kettu/Projects/HelloRust/src/evaluator_v2.rs /home/kettu/Projects/HelloRust/src/lexer.rs /home/kettu/Projects/HelloRust/src/main.rs /home/kettu/Projects/HelloRust/src/streaming_parser.rs /home/kettu/Projects/HelloRust/src/tag.rs

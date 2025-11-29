@@ -1,0 +1,3 @@
+[[define: [character: alice]]:
+    [[set: [attribute: name]]: [text: Alice]]
+]
