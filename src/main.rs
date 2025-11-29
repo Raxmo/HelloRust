@@ -10,6 +10,7 @@ use streaming_parser::StreamingParser;
 use evaluator_v2::Evaluator;
 
 fn main() {
+    // Collect command-line arguments into a Vec. args[0] is the program name, args[1] is the filename.
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         eprintln!("Usage: packard <script.psl>");
@@ -25,7 +26,7 @@ fn main() {
         }
     };
 
-    // Stage 1: Tokenize
+    // Stage 1: Tokenize (see src/lexer.rs)
     let tokens = match tokenize(&source) {
         Ok(tokens) => tokens,
         Err(e) => {
@@ -39,7 +40,7 @@ fn main() {
         println!("  {}: {:?}", i, token);
     }
 
-    // Stage 2: Parse
+    // Stage 2: Parse (see src/streaming_parser.rs)
     let mut parser = StreamingParser::new(tokens);
     let root = match parser.parse() {
         Ok(root) => root,
@@ -52,7 +53,7 @@ fn main() {
     println!("\nParsed root tag:");
     println!("  {}", format_tag(&root, 2));
 
-    // Stage 3 & 4: Validate and Evaluate
+    // Stage 3 & 4: Validate and Evaluate (see src/evaluator_v2.rs)
     match Evaluator::new("eval_trace.log") {
         Ok(mut evaluator) => {
             match evaluator.execute_root(&root) {
@@ -77,6 +78,9 @@ fn main() {
     }
 }
 
+// Format a TagNode tree for pretty-printing with indentation.
+// Primitives display as their text representation.
+// Composites recursively format ltag and rtag with increased indentation.
 fn format_tag(tag: &tag::TagNode, indent: usize) -> String {
     let ind = " ".repeat(indent);
     match tag {
