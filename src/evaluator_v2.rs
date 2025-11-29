@@ -11,13 +11,13 @@ lazy_static! {
         let mut map = HashMap::new();
         map.insert("root", Evaluator::handle_root as Handler);
         map.insert("character", Evaluator::handle_character as Handler);
-        map.insert("define", Evaluator::handle_define as Handler);
+        // Note: "define" is handled specially in evaluate_tag, not through handlers
         map.insert("list", Evaluator::handle_list as Handler);
         map.insert("text", Evaluator::handle_text as Handler);
         map.insert("number", Evaluator::handle_number as Handler);
         map.insert("flag", Evaluator::handle_flag as Handler);
         map.insert("item", Evaluator::handle_item as Handler);
-        map.insert("set", Evaluator::handle_set as Handler);
+        // Note: "set" is handled specially in evaluate_tag, not through handlers
         map.insert("attribute", Evaluator::handle_attribute as Handler);
         map
     };
@@ -63,6 +63,70 @@ impl Evaluator {
         self.frames.last_mut().expect("frames never empty")
     }
 
+    /// Extract operation name from an ltag (walk to innermost primitive if composite)
+    fn extract_operation_name(&self, ltag: &TagNode) -> Result<String, String> {
+        match ltag {
+            TagNode::Primitive(prim) => {
+                prim.as_text()
+                    .ok_or_else(|| "Operation name must be text".to_string())
+            }
+            TagNode::Composite { ltag: inner_ltag, rtag: _inner_rtag } => {
+                // Walk the ltag chain to find the innermost primitive
+                self.extract_operation_name(inner_ltag)
+            }
+        }
+    }
+
+    /// Execute a define block: push scope, execute content, pop scope
+    fn handle_define_block(&mut self, content: &TagNode) -> Result<Value, String> {
+        // Push a new frame for this define block
+        self.frames.push(Frame::new());
+        
+        // Execute the content within the new scope
+        let result = self.evaluate_tag(content)?;
+        
+        // Pop the frame when done
+        self.frames.pop();
+        
+        Ok(result)
+    }
+
+    /// Execute a set block: the ltag is [set: target], rtag is the value
+    /// We need to extract the target from the set expression
+    fn handle_set_block(&mut self, set_expr: &TagNode, value_tag: &TagNode) -> Result<Value, String> {
+        // set_expr is [set: target], so we need to extract the rtag (target)
+        let target = match set_expr {
+            TagNode::Composite { ltag: _, rtag } => rtag.as_ref(),
+            _ => {
+                return Err("set expression must be composite [set: target]".to_string());
+            }
+        };
+        
+        // Evaluate the target to get a reference
+        let target_value = self.evaluate_tag(target)?;
+        
+        // Evaluate the value to assign
+        let value = self.evaluate_tag(value_tag)?;
+        
+        // Perform the assignment
+        if let Value::Reference(name) = target_value {
+            // Search up the frame stack to find where this is defined
+            for frame in self.frames.iter_mut().rev() {
+                if frame.attributes.contains_key(&name) {
+                    frame.attributes.insert(name.clone(), value.clone());
+                    return Ok(value);
+                }
+                if frame.variables.contains_key(&name) {
+                    frame.variables.insert(name.clone(), value.clone());
+                    return Ok(value);
+                }
+            }
+            Err(format!("Cannot assign to undefined attribute/variable '{}'", name))
+        } else {
+            Err(format!("set target must resolve to a reference, got {:?}", target_value))
+        }
+    }
+
     fn writeln_log(&mut self, msg: &str) -> std::io::Result<()> {
         if let Some(ref mut file) = self.log_file {
             writeln!(file, "{}", msg)?;
@@ -83,12 +147,11 @@ impl Evaluator {
                 self.validate_tag(ltag, _scope)?;
                 self.validate_tag(rtag, _scope)?;
                 
-                // Check operation is valid
-                if let TagNode::Primitive(prim) = ltag.as_ref() {
-                    if let Some(op_name) = prim.as_text() {
-                        if !HANDLERS.contains_key(op_name.as_str()) {
-                            return Err(format!("Unknown operation: '{}'", op_name));
-                        }
+                // Check operation is valid (extract operation name from ltag, handling nesting)
+                if let Ok(op_name) = self.extract_operation_name(ltag) {
+                    // "define" and "set" are handled specially, not through HANDLERS registry
+                    if op_name != "define" && op_name != "set" && !HANDLERS.contains_key(op_name.as_str()) {
+                        return Err(format!("Unknown operation: '{}'", op_name));
                     }
                 }
                 Ok(())
@@ -147,30 +210,37 @@ impl Evaluator {
                 self.writeln_log(&format!("[Eval {}] Composite tag: [ltag: rtag]", eval_id))
                     .map_err(|e| format!("Log error: {}", e))?;
 
-                // Evaluate ltag
-                self.writeln_log(&format!("[Eval {}] Evaluating ltag...", eval_id))
-                    .map_err(|e| format!("Log error: {}", e))?;
-                let ltag_value = self.evaluate_tag(ltag)?;
+                // Extract operation name from ltag (walk to innermost primitive if ltag is composite)
+                let op_name = self.extract_operation_name(ltag)?;
 
-                self.writeln_log(&format!("[Eval {}]   ltag evaluated to: {}", eval_id, ltag_value))
-                    .map_err(|e| format!("Log error: {}", e))?;
-
-                // Evaluate rtag
-                self.writeln_log(&format!("[Eval {}] Evaluating rtag...", eval_id))
-                    .map_err(|e| format!("Log error: {}", e))?;
-                let rtag_value = self.evaluate_tag(rtag)?;
-
-                self.writeln_log(&format!("[Eval {}]   rtag evaluated to: {}", eval_id, rtag_value))
-                    .map_err(|e| format!("Log error: {}", e))?;
-
-                // Dispatch handler based solely on operation name
                 self.writeln_log(&format!(
-                    "[Eval {}] Dispatching handler for operation: {}",
-                    eval_id, ltag_value
+                    "[Eval {}] Operation: {}",
+                    eval_id, op_name
                 ))
                 .map_err(|e| format!("Log error: {}", e))?;
 
-                let result = self.execute(&ltag_value, &rtag_value)?;
+                // Dispatch based on operation - some ops need special handling
+                let result = match op_name.as_str() {
+                    "define" => {
+                        // define needs special handling - it manages its own scope and content execution
+                        self.handle_define_block(rtag)?
+                    }
+                    "set" => {
+                        // set needs special handling - it evaluates the target (ltag) and assigns to it
+                        self.handle_set_block(ltag, rtag)?
+                    }
+                    _ => {
+                        // For other operations, evaluate rtag normally and dispatch
+                        self.writeln_log(&format!("[Eval {}] Evaluating rtag...", eval_id))
+                            .map_err(|e| format!("Log error: {}", e))?;
+                        let rtag_value = self.evaluate_tag(rtag)?;
+
+                        self.writeln_log(&format!("[Eval {}]   rtag evaluated to: {}", eval_id, rtag_value))
+                            .map_err(|e| format!("Log error: {}", e))?;
+
+                        self.execute_operation(&op_name, &rtag_value)?
+                    }
+                };
 
                 self.writeln_log(&format!("[Eval {}] Handler result: {}", eval_id, result))
                     .map_err(|e| format!("Log error: {}", e))?;
@@ -180,38 +250,29 @@ impl Evaluator {
         }
     }
 
-    fn execute(&mut self, ltag: &Value, rtag: &Value) -> Result<Value, String> {
-        // Handle assignment: if ltag is a reference, assign rtag to it
-        if let Value::Reference(name) = ltag {
-            let frame = self.current_frame();
-            // Check if attribute exists
-            if !frame.attributes.contains_key(name) && !frame.variables.contains_key(name) {
-                return Err(format!("Cannot assign to undefined attribute/variable '{}'", name));
-            }
-            // Store the value
-            if frame.attributes.contains_key(name) {
-                frame.attributes.insert(name.clone(), rtag.clone());
-            } else {
-                frame.variables.insert(name.clone(), rtag.clone());
-            }
-            return Ok(rtag.clone());
-        }
-
-        // Extract operation name from ltag if it's text
-        match ltag {
-            Value::Text(ref op_name) => {
-                // Dispatch based on handler registry
-                if let Some(handler) = HANDLERS.get(op_name.as_str()) {
-                    handler(self, rtag)
-                } else {
-                    Err(format!("Unknown operation '{}'", op_name))
+    fn execute_operation(&mut self, op_name: &str, rtag_value: &Value) -> Result<Value, String> {
+        // Handle assignment: if rtag_value contains a reference through evaluated rtag
+        // (This is for cases where we've evaluated an assignment target)
+        if let Value::Reference(name) = rtag_value {
+            // Search up the frame stack to find where this is defined
+            for frame in self.frames.iter_mut().rev() {
+                if frame.attributes.contains_key(name) {
+                    frame.attributes.insert(name.clone(), Value::Item);
+                    return Ok(rtag_value.clone());
+                }
+                if frame.variables.contains_key(name) {
+                    frame.variables.insert(name.clone(), Value::Item);
+                    return Ok(rtag_value.clone());
                 }
             }
-            _ => {
-                // If ltag isn't an operation name, just return rtag
-                // This allows structure like [[def: ...]: [list: ...]] to work
-                Ok(rtag.clone())
-            }
+            return Err(format!("Cannot assign to undefined attribute/variable '{}'", name));
+        }
+
+        // Dispatch based on handler registry
+        if let Some(handler) = HANDLERS.get(op_name) {
+            handler(self, rtag_value)
+        } else {
+            Err(format!("Unknown operation '{}'", op_name))
         }
     }
 
@@ -228,12 +289,6 @@ impl Evaluator {
         } else {
             Err("Character name must be text".to_string())
         }
-    }
-
-    fn handle_define(&mut self, _rtag: &Value) -> Result<Value, String> {
-        // Push a new frame for the define block
-        self.frames.push(Frame::new());
-        Ok(Value::Item)
     }
 
     fn handle_list(&mut self, _rtag: &Value) -> Result<Value, String> {
@@ -258,26 +313,17 @@ impl Evaluator {
         Ok(Value::Item)
     }
 
-    fn handle_set(&mut self, rtag: &Value) -> Result<Value, String> {
-        // set returns a reference to indicate "this is a settable location"
-        // The actual assignment happens when this reference is used as ltag in outer context
-        match rtag {
-            Value::Reference(name) => {
-                // Just pass through the reference
-                Ok(Value::Reference(name.clone()))
-            }
-            _ => Err(format!("set expects a reference, got {:?}", rtag)),
-        }
-    }
-
     fn handle_attribute(&mut self, rtag: &Value) -> Result<Value, String> {
-        // attribute both declares (if needed) and returns a reference
+        // attribute both declares (if needed in current scope) and returns a reference
         if let Value::Text(name) = rtag {
-            let frame = self.current_frame();
-            // Declare the attribute if it doesn't exist yet
-            if !frame.attributes.contains_key(name) {
-                frame.attributes.insert(name.clone(), Value::Item);
+            // Check if attribute exists in any scope first
+            let exists = self.frames.iter().any(|f| f.attributes.contains_key(name));
+            
+            // If not found in any scope, declare it in current frame
+            if !exists {
+                self.current_frame().attributes.insert(name.clone(), Value::Item);
             }
+            
             Ok(Value::Reference(name.clone()))
         } else {
             Err("Attribute name must be text".to_string())

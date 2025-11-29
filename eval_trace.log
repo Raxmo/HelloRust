@@ -3,85 +3,37 @@
 === Evaluation Trace ===
 
 [Eval 1] Composite tag: [ltag: rtag]
-[Eval 1] Evaluating ltag...
-[Eval 2] Primitive: root => "root"
-[Eval 1]   ltag evaluated to: "root"
+[Eval 1] Operation: root
 [Eval 1] Evaluating rtag...
+[Eval 2] Composite tag: [ltag: rtag]
+[Eval 2] Operation: list
+[Eval 2] Evaluating rtag...
 [Eval 3] Composite tag: [ltag: rtag]
-[Eval 3] Evaluating ltag...
-[Eval 4] Primitive: list => "list"
-[Eval 3]   ltag evaluated to: "list"
-[Eval 3] Evaluating rtag...
+[Eval 3] Operation: define
+[Eval 4] Composite tag: [ltag: rtag]
+[Eval 4] Operation: list
+[Eval 4] Evaluating rtag...
 [Eval 5] Composite tag: [ltag: rtag]
-[Eval 5] Evaluating ltag...
+[Eval 5] Operation: set
 [Eval 6] Composite tag: [ltag: rtag]
-[Eval 6] Evaluating ltag...
-[Eval 7] Primitive: define => "define"
-[Eval 6]   ltag evaluated to: "define"
+[Eval 6] Operation: attribute
 [Eval 6] Evaluating rtag...
+[Eval 7] Primitive: name => "name"
+[Eval 6]   rtag evaluated to: "name"
+[Eval 6] Handler result: &name
 [Eval 8] Composite tag: [ltag: rtag]
-[Eval 8] Evaluating ltag...
-[Eval 9] Primitive: character => "character"
-[Eval 8]   ltag evaluated to: "character"
+[Eval 8] Operation: text
 [Eval 8] Evaluating rtag...
-[Eval 10] Primitive: alice => "alice"
-[Eval 8]   rtag evaluated to: "alice"
-[Eval 8] Dispatching handler for operation: "character"
-[Eval 8] Handler result: "character:alice"
-[Eval 6]   rtag evaluated to: "character:alice"
-[Eval 6] Dispatching handler for operation: "define"
-[Eval 6] Handler result: item
-[Eval 5]   ltag evaluated to: item
-[Eval 5] Evaluating rtag...
-[Eval 11] Composite tag: [ltag: rtag]
-[Eval 11] Evaluating ltag...
-[Eval 12] Primitive: list => "list"
-[Eval 11]   ltag evaluated to: "list"
-[Eval 11] Evaluating rtag...
-[Eval 13] Composite tag: [ltag: rtag]
-[Eval 13] Evaluating ltag...
-[Eval 14] Composite tag: [ltag: rtag]
-[Eval 14] Evaluating ltag...
-[Eval 15] Primitive: set => "set"
-[Eval 14]   ltag evaluated to: "set"
-[Eval 14] Evaluating rtag...
-[Eval 16] Composite tag: [ltag: rtag]
-[Eval 16] Evaluating ltag...
-[Eval 17] Primitive: attribute => "attribute"
-[Eval 16]   ltag evaluated to: "attribute"
-[Eval 16] Evaluating rtag...
-[Eval 18] Primitive: name => "name"
-[Eval 16]   rtag evaluated to: "name"
-[Eval 16] Dispatching handler for operation: "attribute"
-[Eval 16] Handler result: &name
-[Eval 14]   rtag evaluated to: &name
-[Eval 14] Dispatching handler for operation: "set"
-[Eval 14] Handler result: &name
-[Eval 13]   ltag evaluated to: &name
-[Eval 13] Evaluating rtag...
-[Eval 19] Composite tag: [ltag: rtag]
-[Eval 19] Evaluating ltag...
-[Eval 20] Primitive: text => "text"
-[Eval 19]   ltag evaluated to: "text"
-[Eval 19] Evaluating rtag...
-[Eval 21] Primitive: Alice => "Alice"
-[Eval 19]   rtag evaluated to: "Alice"
-[Eval 19] Dispatching handler for operation: "text"
-[Eval 19] Handler result: "Alice"
-[Eval 13]   rtag evaluated to: "Alice"
-[Eval 13] Dispatching handler for operation: &name
-[Eval 13] Handler result: "Alice"
-[Eval 11]   rtag evaluated to: "Alice"
-[Eval 11] Dispatching handler for operation: "list"
-[Eval 11] Handler result: item
-[Eval 5]   rtag evaluated to: item
-[Eval 5] Dispatching handler for operation: item
-[Eval 5] Handler result: item
-[Eval 3]   rtag evaluated to: item
-[Eval 3] Dispatching handler for operation: "list"
+[Eval 9] Primitive: Alice => "Alice"
+[Eval 8]   rtag evaluated to: "Alice"
+[Eval 8] Handler result: "Alice"
+[Eval 5] Handler result: "Alice"
+[Eval 4]   rtag evaluated to: "Alice"
+[Eval 4] Handler result: item
 [Eval 3] Handler result: item
+[Eval 2]   rtag evaluated to: item
+[Eval 2] Handler result: item
 [Eval 1]   rtag evaluated to: item
-[Eval 1] Dispatching handler for operation: "root"
 [Eval 1] Handler result: item
 
 === Evaluation Complete ===
