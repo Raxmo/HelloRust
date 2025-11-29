@@ -60,64 +60,22 @@ impl Primitive {
             },
         }
     }
-
-    pub fn as_display_string(&self) -> String {
-        match self {
-            Primitive::Identifier(s) => s.clone(),
-            Primitive::Number(n) => {
-                if n.fract() == 0.0 {
-                    format!("{}", *n as i64)
-                } else {
-                    format!("{}", n)
-                }
-            }
-            Primitive::String(s) => format!("\"{}\"", s),
-            Primitive::Keyword(s) => s.clone(),
-        }
-    }
-
-    pub fn as_text(&self) -> Option<String> {
-        match self {
-            Primitive::Identifier(s) => Some(s.clone()),
-            Primitive::String(s) => Some(s.clone()),
-            Primitive::Keyword(kw) => Some(kw.clone()),
-            Primitive::Number(_) => None,
-        }
-    }
 }
 
 impl TagNode {
-    #[allow(dead_code)]
-    pub fn evaluate_ltag(&self) -> Result<Value, String> {
+    // Extract ltag from a composite tag
+    pub fn ltag(&self) -> Option<&TagNode> {
         match self {
-            TagNode::Primitive(prim) => Ok(prim.to_value()),
-            TagNode::Composite { ltag, rtag } => {
-                let _ = ltag.evaluate_ltag()?;
-                let _ = rtag.evaluate_ltag()?;
-                Ok(Value::Item)
-            }
+            TagNode::Composite { ltag, .. } => Some(ltag),
+            TagNode::Primitive(_) => None,
         }
     }
 
-    #[allow(dead_code)]
-    pub fn evaluate_rtag(&self) -> Result<Value, String> {
+    // Extract rtag from a composite tag
+    pub fn rtag(&self) -> Option<&TagNode> {
         match self {
-            TagNode::Primitive(prim) => Ok(prim.to_value()),
-            TagNode::Composite { ltag, rtag } => {
-                let _ = ltag.evaluate_rtag()?;
-                let _ = rtag.evaluate_rtag()?;
-                Ok(Value::Item)
-            }
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn to_display_string(&self) -> String {
-        match self {
-            TagNode::Primitive(prim) => prim.as_display_string(),
-            TagNode::Composite { ltag, rtag } => {
-                format!("[{}: {}]", ltag.to_display_string(), rtag.to_display_string())
-            }
+            TagNode::Composite { rtag, .. } => Some(rtag),
+            TagNode::Primitive(_) => None,
         }
     }
 }

@@ -81,6 +81,7 @@ impl StreamingParser {
 
     fn create_list_node(mut tags: Vec<TagNode>) -> TagNode {
         if tags.is_empty() {
+            // Empty program: return list with item keyword as placeholder
             TagNode::Composite {
                 ltag: Box::new(TagNode::Primitive(Primitive::Keyword("list".to_string()))),
                 rtag: Box::new(TagNode::Primitive(Primitive::Keyword("item".to_string()))),
@@ -180,8 +181,8 @@ impl StreamingParser {
                     }
                 }
                 _ => {
-                    return Err(format!("Unexpected token: {:?}", self.current()));
-                }
+                     return Err(format!("Unexpected token: {:?}", self.current()));
+                 }
             }
         }
     }
