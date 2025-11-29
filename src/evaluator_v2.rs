@@ -2,6 +2,26 @@ use crate::tag::{TagNode, Value};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
+use lazy_static::lazy_static;
+
+type Handler = fn(&mut Evaluator, &Value) -> Result<Value, String>;
+
+lazy_static! {
+    static ref HANDLERS: HashMap<&'static str, Handler> = {
+        let mut map = HashMap::new();
+        map.insert("root", Evaluator::handle_root as Handler);
+        map.insert("character", Evaluator::handle_character as Handler);
+        map.insert("define", Evaluator::handle_define as Handler);
+        map.insert("list", Evaluator::handle_list as Handler);
+        map.insert("text", Evaluator::handle_text as Handler);
+        map.insert("number", Evaluator::handle_number as Handler);
+        map.insert("flag", Evaluator::handle_flag as Handler);
+        map.insert("item", Evaluator::handle_item as Handler);
+        map.insert("set", Evaluator::handle_set as Handler);
+        map.insert("attribute", Evaluator::handle_attribute as Handler);
+        map
+    };
+}
 
 /// Execution frame tracks scope and defined variables/attributes
 #[derive(Debug, Clone)]
@@ -66,17 +86,12 @@ impl Evaluator {
                 // Check operation is valid
                 if let TagNode::Primitive(prim) = ltag.as_ref() {
                     if let Some(op_name) = prim.as_text() {
-                        match op_name.as_str() {
-                            "root" | "list" | "character" | "define" | "text" | "number" 
-                            | "flag" | "item" | "set" | "attribute" => Ok(()),
-                            _ => Err(format!("Unknown operation: '{}'", op_name)),
+                        if !HANDLERS.contains_key(op_name.as_str()) {
+                            return Err(format!("Unknown operation: '{}'", op_name));
                         }
-                    } else {
-                        Ok(()) // Non-text ltag is fine (gets caught at runtime if invalid)
                     }
-                } else {
-                    Ok(()) // Complex ltag is fine (will be evaluated)
                 }
+                Ok(())
             }
         }
     }
@@ -185,19 +200,11 @@ impl Evaluator {
         // Extract operation name from ltag if it's text
         match ltag {
             Value::Text(ref op_name) => {
-                // Dispatch based solely on operation name
-                match op_name.as_str() {
-                    "root" => self.handle_root(rtag),
-                    "character" => self.handle_character(rtag),
-                    "define" => self.handle_define(rtag),
-                    "list" => self.handle_list(rtag),
-                    "text" => self.handle_text(rtag),
-                    "number" => self.handle_number(rtag),
-                    "flag" => self.handle_flag(rtag),
-                    "item" => self.handle_item(rtag),
-                    "set" => self.handle_set(rtag),
-                    "attribute" => self.handle_attribute(rtag),
-                    _ => Err(format!("Unknown operation '{}'", op_name)),
+                // Dispatch based on handler registry
+                if let Some(handler) = HANDLERS.get(op_name.as_str()) {
+                    handler(self, rtag)
+                } else {
+                    Err(format!("Unknown operation '{}'", op_name))
                 }
             }
             _ => {
