@@ -14,6 +14,36 @@ This uniformity makes the language learnable and predictable. Once you understan
 
 **Exceptions:** Tag lists (sequences of instructions), operators (like `+`, `>`, `and`), and the property accessor (`->`) don't follow the `[left: right]` pattern. These are special cases, but they're easy to recognize and understand in context.
 
+### Tag Lists
+
+Tag lists are sequences of tags grouped together. They appear as RTag values in control structures and definitions. Tag lists are enclosed in brackets and use **commas to separate individual tags**:
+
+```
+[ tag1, tag2, tag3 ]
+```
+
+This clear separation makes it easy to:
+- Identify tag boundaries without ambiguity
+- Detect syntax errors with precise error messages
+- Parse and validate scripts reliably
+- Provide writers with immediate feedback on malformed syntax
+
+Commas are optional after the final tag in a list:
+```
+[ tag1, tag2, tag3 ]   // comma after tag3 is optional
+[ tag1, tag2 ]         // valid without trailing comma
+```
+
+Examples of tag lists:
+```
+[[define: [character: alice]:
+    [[set: [attribute: name]]: [text: Alice]],
+    [[define: [container: bag]:
+        [[set: [attribute: sword]]: [item]]
+    ]]
+]]
+```
+
 ### Tag Roles: FTags, LTags, RTags, and CTags
 
 Every tag in Packard has a fixed, static role determined by its structure, not where it appears.
@@ -188,9 +218,9 @@ Attributes hold typed values (Number, Text, Flag). Items represent existence wit
 **Examples:**
 ```
 [[define: [character: alice]:
-    [[set: [attribute: name]]: [text: Alice]]
+    [[set: [attribute: name]]: [text: Alice]],
     [[define: [container: bag]:
-        [[set: [attribute: sword]]: [item:]]
+        [[set: [attribute: sword]]: [item]],
         [[set: [attribute: capacity]]: [number: 100]]
     ]]
 ]]
@@ -265,10 +295,10 @@ Within a `define` block, items are added through `set` with the bare `[item]` RT
 
 ```
 [[define: [character: alice]:
-    [[set: [attribute: name]]: [text: Alice]]
+    [[set: [attribute: name]]: [text: Alice]],
     [[define: [container: bag]:
-        [[set: [attribute: book]]: [item]]
-        [[set: [attribute: capacity]]: [number: 100]]
+        [[set: [attribute: book]]: [item]],
+        [[set: [attribute: capacity]]: [number: 100]],
         [[set: [attribute: usage]]: [number: 1]]
     ]]
 ]]
@@ -277,9 +307,12 @@ Within a `define` block, items are added through `set` with the bare `[item]` RT
 **Breaking this down:**
 - `[[define: [character: alice]:` — Begin defining character alice
 - `[[set: [attribute: name]]: [text: Alice]]` — Direct attribute assignment (set takes an accessor LTag and a value RTag)
+- `,` — Separator between tags in the define block
 - `[[define: [container: bag]:` — Define bag as a container that can hold attributes and items
 - `[[set: [attribute: book]]: [item]]` — Add an item attribute named book using bare `[item]` RTag
+- `,` — Separator between nested tags
 - `[[set: [attribute: capacity]]: [number: 100]]` — Add an attribute to the container with a number value
+- `,` — Separator between tags
 - `[[set: [attribute: usage]]: [number: 1]]` — Add another attribute to the container
 - `]]` — End the bag container define and alice character define
 
@@ -325,12 +358,13 @@ Packard performs complete static analysis at script load time. This means syntax
 
 ### Parsing and Grammar
 
-The parser validates that all tags follow the `[left: right]` structure and that exceptions (tag lists, operators, `->`) are used correctly. Malformed tags are rejected immediately with clear error messages indicating location and issue.
+The parser validates that all tags follow the `[left: right]` structure and that exceptions (tag lists, operators, `->`) are used correctly. Tag lists are enclosed in brackets with comma-separated tags. Malformed tags are rejected immediately with clear error messages indicating location and issue.
 
 Example errors caught:
 - Missing colons: `[if condition]` (should be `[if: condition]`)
 - Mismatched brackets: `[character: alice`
-- Invalid nesting: `[[set: [attribute: name]: [text: Alice]]: [number: 100]]` (nested too deep)
+- Missing comma in tag list: `[ tag1 tag2 ]` (should be `[ tag1, tag2 ]`)
+- Invalid tag list format: `[ tag1, tag2 ` (unclosed bracket)
 
 ### Type Resolution and Inference
 
