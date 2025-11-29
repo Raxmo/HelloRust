@@ -7,6 +7,11 @@
 - Always verify file has been saved before proceeding (check file modification time if needed)
 - If you reference updating something in a file, double-check the file reflects the change
 
+**Branch Names as Task Context**
+- The current branch name reflects the current task and general goal
+- Use it to understand what's being worked on in this part of the session
+- Example: `codebase-overview` = walking through and understanding the codebase structure
+
 ## Workflow
 
 ### Before Starting Work
